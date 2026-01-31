@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-// returns the DSN for MySQL connection.
+// returns DSN for MySQL connection
 func MySQLDSN() string {
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {

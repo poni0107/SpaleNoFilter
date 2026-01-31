@@ -2,48 +2,66 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"user_follow_service/config"
-	"user_follow_service/controller"
+	"time"
+	"user_follow_service/client"
+	"user_follow_service/handler"
 	"user_follow_service/repository"
-	"user_follow_service/routes"
-
-	"github.com/joho/godotenv"
+	"user_follow_service/service"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found, using environment variables")
-	}
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using env variables")
+		log.Fatal("Error loading .env file")
 	}
-
-	port := os.Getenv("APP_PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	// DB
-	db, err := sql.Open("mysql", config.MySQLDSN())
+	fmt.Print(MySQLDSN())
+	db, err := sql.Open("mysql", MySQLDSN())
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := db.Ping(); err != nil {
-		log.Fatal("DB connection failed:", err)
+	httpClient := &http.Client{
+		Timeout: 3 * time.Second,
 	}
 
-	repo := &repository.FollowRepository{DB: db}
-	ctrl := &controller.FollowController{Repo: repo}
+	userClient := client.NewUserClient(
+		"http://localhost:8081", // users service
+		httpClient,
+	)
 
-	routes.Register(ctrl)
+	repo := repository.NewFollowRepository(db)
+	svc := service.NewFollowService(repo, userClient)
+	ctrl := handler.NewFollowController(svc)
 
-	log.Println("API running on :" + port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	http.HandleFunc("/follow", ctrl.Follow)
+	http.HandleFunc("/unfollow", ctrl.Unfollow)
+	http.HandleFunc("/get-followers", ctrl.GetFollowers)
+	http.HandleFunc("/get-following", ctrl.GetFollowing)
+
+	log.Println("Follow service running on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func MySQLDSN() string {
+	host := os.Getenv("MYSQL_HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+
+	port := os.Getenv("MYSQL_PORT")
+	if port == "" {
+		port = "3306"
+	}
+
+	user := os.Getenv("MYSQL_USER")
+	pass := os.Getenv("MYSQL_PASSWORD")
+	db := os.Getenv("MYSQL_USER_FOLLOWING_SERVICE_DATABASE")
+
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", user, pass, host, port, db)
 }
