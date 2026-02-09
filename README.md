@@ -12,7 +12,7 @@ The application is built using a microservices architecture, Docker for containe
 | Backend Engineer A | Marijana Jeremic |
 | Backend Engineer B | Anita Mijatovic |
 | Backend Engineer C | Mihajlo Spasic |
-| Frontend Engineer | Marijana Jeremic |
+| Frontend Engineer | Marijana Jeremic&Mihailo Sundovic |
 
 ---
 
