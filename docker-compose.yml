@@ -1,0 +1,123 @@
+#------------------------------------------
+# MYSQL SERVICES
+services:
+  user_follow_service_mysql:
+    image: mysql
+    container_name: user_following_service_mysql
+    restart: unless-stopped
+    env_file:
+      - user_follow_service/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_USER_FOLLOWING_SERVICE_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_USER_FOLLOWING_SERVICE_PORT}:3306"
+    volumes:
+      # - mysql_data:/var/lib/mysql
+      - ./user_follow_service/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  user_block_service_mysql:
+    image: mysql
+    container_name: user_block_service_mysql
+    restart: unless-stopped
+    env_file:
+      - user_block_service/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_USER_BLOCK_SERVICE_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_USER_BLOCK_SERVICE_PORT}:3306"
+    volumes:
+      # - mysql_data:/var/lib/mysql
+      - ./user_block_service/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  user_service_mysql:
+    image: mysql
+    container_name: user_service_mysql
+    restart: unless-stopped
+    env_file:
+      - user_service/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_USER_SERVICE_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${MYSQL_USER_SERVICE_PORT}:3306"
+    volumes:
+      # - mysql_data:/var/lib/mysql
+      - ./user_service/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # auth_service_mysql:
+  #   image: mysql
+  #   container_name: auth_service_mysql
+  #   restart: unless-stopped
+  #   env_file:
+  #     - auth_service/.env
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  #     MYSQL_DATABASE: ${MYSQL_AUTH_SERVICE_DATABASE}
+  #     MYSQL_USER: ${MYSQL_USER}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+  #   ports:
+  #     - "${MYSQL_AUTH_SERVICE_PORT}:3306"
+  #   volumes:
+  #     - auth_mysql_data:/var/lib/mysql
+  #     - ./auth_service/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
+
+#---------------------------------------------------------
+# API Services
+  user_follow_api:
+    build: user_follow_api/
+    container_name: user_following_service_api
+    restart: unless-stopped
+    env_file:
+      - user_follow_service/cmd/.env
+    depends_on:
+      - user_follow_service_mysql
+    ports:
+      - "9000:9000"
+  user_block_api:
+    build: user_block_service/
+    container_name: user_block_service_api
+    restart: unless-stopped
+    env_file:
+      - user_block_service/cmd/.env
+    depends_on:
+      - user_block_service_mysql
+    ports:
+      - "9001:9001"
+
+  user_api:
+    build: user_service/
+    container_name: user_service_api
+    restart: unless-stopped
+    env_file:
+      - user_service/cmd/.env
+    depends_on:
+      - user_service_mysql
+    ports:
+      - "9002:9002"
+  user_auth_api:
+    build: user_auth_service/
+    container_name: user_auth_service_api
+    restart: unless-stopped
+    env_file:
+      - user_auth_service/cmd/.env
+    # depends_on:
+    #   auth_service_mysql:
+    #     condition: service_healthy
+    ports:
+      - "8500:8500"
+
+
+volumes:
+  user_follow_mysql_data:
+  user_block_mysql_data:
+  user_service_mysql_data:
