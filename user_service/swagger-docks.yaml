@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: User Service API
+  version: 1.0.0
+  description: |
+    Microservice responsible for managing users in the Instagram clone project.
+    Supports creating users, retrieving user info, deleting users, and checking user existence.
+
+servers:
+  - url: http://localhost:8081
+    description: Local development
+
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      description: Create a new user account with username, email, and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: User with same username or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/get:
+    get:
+      summary: Get user by ID
+      description: Retrieve user information by user ID.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/delete:
+    post:
+      summary: Delete a user
+      description: Deactivate a user account.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/exists:
+    get:
+      summary: Check if a user exists
+      description: Check whether a user exists and is active.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User existence check
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+                    example: true
+
+components:
+  schemas:
+    CreateUserRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          example: spale123
+        email:
+          type: string
+          format: email
+          example: spale@example.com
+        password:
+          type: string
+          format: password
+          example: password123
+        full_name:
+          type: string
+          example: Mihajlo Spasic
+        bio:
+          type: string
+          example: Hello world!
+        profile_picture:
+          type: string
+          format: uri
+          example: https://example.com/avatar.jpg
+        is_private:
+          type: boolean
+          example: false
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: spale123
+        email:
+          type: string
+          example: spale@example.com
+        full_name:
+          type: string
+          example: Mihajlo Spasic
+        bio:
+          type: string
+          example: Hello world!
+        profile_picture:
+          type: string
+          example: https://example.com/avatar.jpg
+        is_private:
+          type: boolean
+          example: false
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-02-08T12:00:00Z"
+
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        message:
+          type: string
+          example: success
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: user not found
