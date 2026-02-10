@@ -1,0 +1,26 @@
+services:
+  mysql-auth:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: instagram_auth
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_auth_data:/var/lib/mysql
+
+  auth-service:
+    build: ./services/auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/instagram_auth?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: app
+      SPRING_DATASOURCE_PASSWORD: app
+    depends_on:
+      - mysql-auth
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql_auth_data:
