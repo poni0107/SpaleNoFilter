@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: User Block Service API
+  version: 1.0.0
+  description: |
+    Microservice responsible for managing user block relationships.
+    User existence is validated via the Users service.
+
+servers:
+  - url: http://localhost:9001
+    description: Local development
+
+paths:
+  /block:
+    post:
+      summary: Block a user
+      description: Block one user from interacting with another.
+      parameters:
+        - name: blocker_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: blocked_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Invalid operation (e.g. self-block)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: One or both users do not exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: User already blocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Users service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /unblock:
+    post:
+      summary: Unblock a user
+      description: Remove a block between two users.
+      parameters:
+        - name: blocker_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: blocked_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully unblocked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Block relationship or user not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Users service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /get-blocked:
+    get:
+      summary: Get blocked users
+      description: Returns a list of user IDs blocked by the given user.
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of blocked users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListResponse"
+        "404":
+          description: User does not exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Users service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        message:
+          type: string
+          example: success
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: user not found
+
+    ListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        data:
+          type: array
+          items:
+            type: integer
+          example: [2, 5, 9]
