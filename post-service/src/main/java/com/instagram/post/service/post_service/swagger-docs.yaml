@@ -1,0 +1,215 @@
+openapi: 3.0.3
+info:
+  title: Instagram Post Service API
+  version: 1.0.0
+  description: |
+    Microservice responsible for managing posts with media files.
+    Provides endpoints for creating, updating, listing, and deleting posts.
+
+servers:
+  - url: http://localhost:8082
+    description: Local development server
+
+paths:
+  /api/posts:
+    post:
+      summary: Create a new post with media files
+      description: Create a post with description, userId, and up to 20 media files (images/videos).
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: "This is my new post"
+                userId:
+                  type: integer
+                  example: 1
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: Successfully created post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostResponse"
+        "400":
+          description: Validation error (e.g., file too large, more than 20 files)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      summary: Get all posts
+      description: Returns a list of all posts in the system.
+      responses:
+        "200":
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PostResponse"
+
+  /api/posts/user/{userId}:
+    get:
+      summary: Get posts by user ID
+      description: Returns all posts created by a specific user.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of posts for the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PostResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/posts/{id}:
+    put:
+      summary: Update a post
+      description: Update post description and optionally replace media files.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: "Updated description"
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: Successfully updated post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostResponse"
+        "404":
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      summary: Delete a post by ID
+      description: Deletes a post and all associated media files.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Successfully deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    PostMediaResponse:
+      type: object
+      properties:
+        fileUrl:
+          type: string
+          example: "http://localhost:9000/instagram-media/123456_image.jpg"
+        contentType:
+          type: string
+          example: "image/jpeg"
+
+    PostResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        description:
+          type: string
+          example: "This is my first post"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-02-12T14:00:00"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-02-12T14:05:00"
+        likes:
+          type: integer
+          example: 0
+        commentsCount:
+          type: integer
+          example: 0
+        isActive:
+          type: boolean
+          example: true
+        mediaFiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/PostMediaResponse"
+
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        message:
+          type: string
+          example: "Post deleted successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: "Post not found"
